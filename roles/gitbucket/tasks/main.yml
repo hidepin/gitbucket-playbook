@@ -1,0 +1,32 @@
+---
+# file: roles/gitbucket/tasks/main.yml
+- name: generate hosts files
+  lineinfile: dest=/etc/hosts regexp='.*{{ansible_fqdn}}.*' line="{{ansible_default_ipv4.address}} {{ansible_fqdn}} {{ansible_hostname}}" state=present
+
+- name: EPEL install check
+  command: rpm -q epel-release
+  register: inst_epel
+  failed_when: inst_epel.rc not in [0,1]
+  changed_when: inst_epel.rc != 0
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "6"
+
+- name: copy EPEL rpm
+  copy: src={{epel}} dest=/tmp
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "6" and inst_epel.rc != 0
+
+- name: EPEL install
+  yum: name=/tmp/{{epel}} state=present
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "6" and inst_epel.rc != 0
+
+- name: tomcat packages install
+  yum: name={{item}} state=present
+  with_items:
+    - tomcat
+
+- name: copy gitbucket.war
+  copy: src=gitbucket.war dest=/var/lib/tomcat/webapps
+  notify:
+    - tomcat restart
+ 
+- name: enable tomcat service
+  service: name=tomcat state=started enabled=yes
