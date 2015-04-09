@@ -3,3 +3,6 @@
 - name: tomcat restart
   service: name=tomcat state=restarted
 
+- name: httpd restart
+  service: name=httpd state=restarted
+
