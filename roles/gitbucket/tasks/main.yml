@@ -27,6 +27,12 @@
   copy: src=gitbucket.war dest=/var/lib/tomcat/webapps
   notify:
     - tomcat restart
+
+- name: create gitbucket repo dir
+  file: path=/var/lib/gitbucket owner=tomcat group=tomcat state=directory
  
+- name: link gitbucket repo for tomcat
+  file: src=/var/lib/gitbucket dest=/usr/share/tomcat/.gitbucket owner=tomcat group=tomcat state=link
+
 - name: enable tomcat service
   service: name=tomcat state=started enabled=yes
