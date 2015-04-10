@@ -35,7 +35,7 @@
   file: src=/var/lib/gitbucket dest=/usr/share/tomcat/.gitbucket owner=tomcat group=tomcat state=link
 
 - name: Apache ServerName setting
-  lineinfile: dest=/etc/httpd/conf/httpd.conf regexp='^#ServerName.*' line="ServerName {{ansible_fqdn}}:80" state=present
+  lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^ServerName" line="ServerName {{ansible_fqdn}}:80" insertafter="^#ServerName" state=present
   notify: httpd restart
 
 - name: enable service
