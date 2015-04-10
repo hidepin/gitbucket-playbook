@@ -18,15 +18,15 @@
   yum: name=/tmp/{{epel}} state=present
   when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "6" and inst_epel.rc != 0
 
-- name: tomcat packages install
+- name: packages install
   yum: name={{item}} state=present
   with_items:
     - tomcat
+    - httpd
 
 - name: copy gitbucket.war
   copy: src=gitbucket.war dest=/var/lib/tomcat/webapps
-  notify:
-    - tomcat restart
+  notify: tomcat restart
 
 - name: create gitbucket repo dir
   file: path=/var/lib/gitbucket owner=tomcat group=tomcat state=directory
@@ -34,5 +34,12 @@
 - name: link gitbucket repo for tomcat
   file: src=/var/lib/gitbucket dest=/usr/share/tomcat/.gitbucket owner=tomcat group=tomcat state=link
 
-- name: enable tomcat service
-  service: name=tomcat state=started enabled=yes
+- name: Apache ServerName setting
+  lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^ServerName" line="ServerName {{ansible_fqdn}}:80" insertafter="^#ServerName" state=present
+  notify: httpd restart
+
+- name: enable service
+  service: name={{item}} state=started enabled=yes
+  with_items:
+    - tomcat
+    - httpd
