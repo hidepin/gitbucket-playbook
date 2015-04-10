@@ -34,9 +34,32 @@
 - name: link gitbucket repo for tomcat
   file: src=/var/lib/gitbucket dest=/usr/share/tomcat/.gitbucket owner=tomcat group=tomcat state=link
 
+- name: Tomcat Disable 8080 Listen for CentOS6
+  template: src=c6_server.xml.j2 dest=/usr/share/tomcat/conf/server.xml owner=tomcat group=tomcat mode=0664
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "6"
+  notify: tomcat restart
+
+- name: Tomcat Disable 8080 Listen for CentOS7
+  template: src=c7_server.xml.j2 dest=/usr/share/tomcat/conf/server.xml owner=tomcat group=tomcat mode=0664
+  when: ansible_distribution == "CentOS" and ansible_distribution_major_version == "7"
+  notify: tomcat restart
+
+- name: Tomcat Disable 8080 Listen for Fedora21
+  template: src=f21_server.xml.j2 dest=/usr/share/tomcat/conf/server.xml owner=tomcat group=tomcat mode=0664
+  when: ansible_distribution == "Fedora" and ansible_distribution_major_version == "21"
+  notify: tomcat restart
+
 - name: Apache ServerName setting
   lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^ServerName" line="ServerName {{ansible_fqdn}}:80" insertafter="^#ServerName" state=present
   notify: httpd restart
+
+- name: Apache Listen setting
+  lineinfile: dest=/etc/httpd/conf/httpd.conf regexp="^Listen" line="Listen 0.0.0.0:80" state=present
+  notify: httpd restart
+
+- name: Connect ajp13 by ProxyPass
+  template: src=gitbucket.conf.j2 dest=/etc/httpd/conf.d/gitbucket.conf owner=root group=root mode=0644
+  notify: httpd restart  
 
 - name: enable service
   service: name={{item}} state=started enabled=yes
